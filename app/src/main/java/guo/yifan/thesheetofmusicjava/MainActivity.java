@@ -1,23 +1,29 @@
 package guo.yifan.thesheetofmusicjava;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
 
-    /** -------- Init ---- */
+    /**
+     * -------- Init ----
+     */
+
+    private static final int READ_BUFFER_SIZE = 4096;
+    private static final int MAX_16_BIT = 32768;
+
     // Template song
     public MediaPlayer mySong;
-    private static final int MAX_16_BIT = 32768;
 
 
     // Button Params
@@ -57,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
             PauseResumeFlag = 0;
             PauseResumeButton.setText("Pause");
         }
-
 
 
     }
@@ -102,9 +107,54 @@ public class MainActivity extends AppCompatActivity {
         return WaveOut;
     }
 
+    /**
+     * Reads audio samples from a file (in WAVE, AU, AIFF, or MIDI format)
+     * and returns them as a double array with values between –1.0 and +1.0.
+     * The sound format must use 16-bit audio data with a sampling rate of 44,100.
+     * The sound format can be either monoaural or stereo, and the bytes can
+     * be stored in either little endian or big endian order.
+     *
+     * @param rawID the name of the audio file
+     * @return the array of samples
+     */
+    public ArrayList<Double> read(int rawID) {
+
+
+        // extract the audio data and convert to a double[] with each sample between -1 and +1
+        try {
+            // create AudioInputStream from file
+            InputStream inputStream = this.getResources().openRawResource(rawID);
+
+            Queue<Double> queue = new LinkedList<Double>();
+
+            // 4K buffer (must be a multiple of 2 for mono or 4 for stereo)
+            byte[] bytes = new byte[READ_BUFFER_SIZE];
+            int count;
+            while ((count = inputStream.read(bytes, 0, READ_BUFFER_SIZE)) != -1) {
+
+                // little endian, monoaural
+                for (int i = 0; i < count / 2; i++) {
+                    double sample = ((short) (((bytes[2 * i + 1] & 0xFF) << 8) | (bytes[2 * i] & 0xFF))) / ((double) MAX_16_BIT);
+                    queue.add(sample);
+                }
+
+            }
+            inputStream.close();
+            Object[] objectArray = queue.toArray();
+            ArrayList<Double> doubleArray = new ArrayList<Double>();
+            for (int i = 0; i < objectArray.length; i++) {
+                doubleArray.add((double) objectArray[i]);
+            }
+            return doubleArray;
+        } catch (IOException ioe) {
+            throw new IllegalArgumentException("could not read '" + rawID + "'", ioe);
+        }
+    }
+
+
     public void LoadAudio(View view) {
         /** Read Audio */
-        ArrayList<Double> amplitudes = readAudio_ArrayList(R.raw.kimi_wo_nosete_trim);
+        ArrayList<Double> amplitudes = read(R.raw.kimi_wo_nosete_trim);
         int NumSamples = amplitudes.size();
         Double[] sound = amplitudes.toArray(new Double[0]);
         String[] args = new String[]{"3000", "0", "kimi_wo_nosete_trim.wav"};

@@ -3,8 +3,10 @@ package guo.yifan.thesheetofmusicjava;
 import android.content.Context;
 import android.util.Log;
 
-import java.io.*;                //for FileReader and BufferedReader
-import java.util.*;     //for deque
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 
 public class LilypadFileGenerator {
 
@@ -16,16 +18,18 @@ public class LilypadFileGenerator {
 //        BufferedReader buffer = new BufferedReader(reader);
         final int MARK_LIMIT = 1000;
         String myLine;
-        
+
         //setup output file to write to
 //        FileWriter writer = new FileWriter("output.ly");
         FileOutputStream writer = ctx.openFileOutput("output.ly", Context.MODE_PRIVATE);
         writer.write("\\absolute {\n".getBytes());
-        
+
         //variables to record magnitude and key on piano for every line & compare max magnitudes across adjacent samples
         Deque<Double> deque = new LinkedList<Double>();
 
         int lastMark = -1;
+
+        ArrayList<ArrayList<Note>> totalNotes = new ArrayList<ArrayList<Note>>();
 
         //get data from each line in test.txt
         for ( int i = 0; i < args.length; i++) {
@@ -51,7 +55,7 @@ public class LilypadFileGenerator {
                     else if (deque.size() == 2 && max_sample < deque.getLast()) {   //peak
                         //retain the magnitude of the peak sample before removing it from the deque
                         double max_magnitude = deque.getLast();
-                        
+
                         while (!deque.isEmpty()) {
                             deque.removeFirst();
                         }
@@ -60,8 +64,8 @@ public class LilypadFileGenerator {
 
                         //to count the number of loudest notes in the sample
                         ArrayList<Note> notes = new ArrayList<Note>();
-                        
-                        //write notes into music score  
+
+                        //write notes into music score
 //                        while ((myLine = buffer.readLine()) != null && !(myLine = buffer.readLine()).contains("START_OF_SAMPLE")) {
                         for (int j = lastMark; j < i; j++) {
                             myLine = args[j];
@@ -72,7 +76,7 @@ public class LilypadFileGenerator {
                                 double magnitude = Double.parseDouble(data[0]);
                                 int index = Integer.parseInt(data[1]);
 
-                                if (magnitude >= max_magnitude - 35) {
+                                if (magnitude >= max_magnitude * 0.65) {
                                     notes.add(new Note(note[0], magnitude, index));
                                 }
                             }
@@ -87,6 +91,8 @@ public class LilypadFileGenerator {
                         }
 //                        buffer.mark(MARK_LIMIT);
                         lastMark = i;
+
+                        totalNotes.add(notes);
                     }
                     else {//deque.size() == 2 && max_sample >= deque.getLast()
                         deque.addLast(max_sample);
@@ -94,7 +100,7 @@ public class LilypadFileGenerator {
 //                        buffer.mark(MARK_LIMIT);
                         lastMark = i;
                     }
-                
+
             }
         }
 
@@ -102,7 +108,7 @@ public class LilypadFileGenerator {
         writer.write("\\version \"2.14.0\"".getBytes());
         writer.close();
     }
-    
+
     public static void writeNote(ArrayList<Note> notes, FileOutputStream writer) throws java.io.IOException {
         for (Note s : notes) {
             int index = s.getIndex();
@@ -135,7 +141,7 @@ public class LilypadFileGenerator {
             }
         }
     }
-           
+
     public static void writeChord(ArrayList<Note> notes, FileOutputStream writer) throws java.io.IOException{
         writer.write("<".getBytes());
         writeNote(notes, writer);
