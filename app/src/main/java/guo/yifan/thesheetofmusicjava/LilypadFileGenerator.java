@@ -3,6 +3,7 @@ package guo.yifan.thesheetofmusicjava;
 import android.content.Context;
 import android.util.Log;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -12,7 +13,7 @@ public class LilypadFileGenerator {
 
     private static final String TAG = "SheetOfMusic";
 
-    public static void main (String[] args, Context ctx) throws java.io.IOException{
+    public static void main (String[] args, Context ctx, File songFile) throws java.io.IOException{
         //prepare to read from file
 //        FileReader reader = new FileReader("test.txt");
 //        BufferedReader buffer = new BufferedReader(reader);
@@ -21,7 +22,9 @@ public class LilypadFileGenerator {
 
         //setup output file to write to
 //        FileWriter writer = new FileWriter("output.ly");
-        FileOutputStream writer = ctx.openFileOutput("output.ly", Context.MODE_PRIVATE);
+//        FileOutputStream writer = ctx.openFileOutput(outputFileName, Context.MODE_PRIVATE);
+
+        FileOutputStream writer = new FileOutputStream(songFile);
         writer.write("\\absolute {\n".getBytes());
 
         //variables to record magnitude and key on piano for every line & compare max magnitudes across adjacent samples

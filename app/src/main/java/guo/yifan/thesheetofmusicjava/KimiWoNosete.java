@@ -52,6 +52,7 @@ public class KimiWoNosete {
 
         int N = Integer.parseInt(args[0]);               //size of the sample
         int Start = Integer.parseInt(args[1]);           //index of the .wav file double array where the sample array starts
+        File outputFile = new File(MainActivity.songsDir, args[2]);                 // name of the output file containing notes and chords
 
         ArrayList<String> lines = new ArrayList<>();     // to send to LilyPond
 
@@ -108,7 +109,7 @@ public class KimiWoNosete {
             }
 
             // call LilyPadFileGenerator.java
-            LilypadFileGenerator.main(lines.toArray(new String[0]), v.getContext());
+            LilypadFileGenerator.main(lines.toArray(new String[0]), v.getContext(), outputFile);
 
         } catch (IOException e) {
             e.printStackTrace();
